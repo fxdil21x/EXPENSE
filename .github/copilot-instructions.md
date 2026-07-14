@@ -1,0 +1,3 @@
+- Verify project files exist for a React + Vite expense tracker.
+- Scaffold a clean, mobile-first UI with daily expense groups and monthly summaries.
+- Keep communication concise and provide launch instructions when ready.
