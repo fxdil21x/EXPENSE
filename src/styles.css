@@ -108,13 +108,7 @@ ul {
 }
 
 .logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--gray-900);
-  text-decoration: none;
+  display: none;
 }
 
 .logo-icon {

@@ -23,11 +23,6 @@ export function AppHeader({
 
   return (
     <header className="app-header">
-      <div className="logo">
-        <img className="logo-icon-img" src="/icons/icon-192.png" alt="Expense Tracker" />
-        <span className="logo-text">ExpenseTracker</span>
-      </div>
-
       <nav className="tab-nav">
         {tabs.map((tab) => (
           <button
