@@ -22,6 +22,7 @@ type AuthContextValue = {
   loading: boolean;
   signIn: () => Promise<void>;
   signOutUser: () => Promise<void>;
+  updateProfile: (updates: { displayName?: string }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -92,6 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await firebaseSignOut(auth);
   };
 
+  const updateProfile = async (updates: { displayName?: string }) => {
+    if (!user) return;
+    const ref = doc(db, 'users', user.uid);
+    await setDoc(ref, updates, { merge: true });
+  };
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -99,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading: !authResolved || (!!user && !profile),
       signIn,
       signOutUser,
+      updateProfile,
     }),
     [user, profile, authResolved],
   );

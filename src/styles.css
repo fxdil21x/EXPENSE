@@ -152,6 +152,10 @@ ul {
   animation: slideDown 0.2s ease-out;
 }
 
+.profile-menu {
+  animation: slideDown 0.2s ease-out;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
