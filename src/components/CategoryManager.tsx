@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Swal from 'sweetalert2';
 import type { Category } from '../types';
 import { paletteFor } from '../lib/palette';
 
@@ -28,8 +29,20 @@ export function CategoryManager({
       await onAdd(name, icon || '🏷️');
       setName('');
       setIcon('🏷️');
+      await Swal.fire({
+        icon: 'success',
+        title: 'Category added',
+        text: 'Your new category is now available.',
+        timer: 1600,
+        showConfirmButton: false,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add this category.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Could not add category',
+        text: err instanceof Error ? err.message : 'Please try again.',
+      });
     }
   };
 
@@ -39,10 +52,29 @@ export function CategoryManager({
   };
 
   const commitEdit = async (id: string) => {
-    if (editName.trim()) {
-      await onUpdate(id, { name: editName.trim() });
+    const trimmed = editName.trim();
+    if (!trimmed) {
+      setEditingId(null);
+      return;
     }
-    setEditingId(null);
+
+    try {
+      await onUpdate(id, { name: trimmed });
+      setEditingId(null);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Category updated',
+        text: 'The category name was changed.',
+        timer: 1400,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Could not update category',
+        text: err instanceof Error ? err.message : 'Please try again.',
+      });
+    }
   };
 
   return (
@@ -130,9 +162,34 @@ export function CategoryManager({
                     <button
                       type="button"
                       className="btn-icon danger"
-                      onClick={() => {
-                        if (confirm(`Delete category "${category.name}"? Existing expenses keep their history.`)) {
-                          onDelete(category.id);
+                      onClick={async () => {
+                        const result = await Swal.fire({
+                          title: `Delete category "${category.name}"?`,
+                          text: 'Existing expenses keep their history.',
+                          icon: 'warning',
+                          showCancelButton: true,
+                          confirmButtonColor: '#ef4444',
+                          cancelButtonColor: '#6b7280',
+                          confirmButtonText: 'Yes, delete it',
+                        });
+
+                        if (!result.isConfirmed) return;
+
+                        try {
+                          await onDelete(category.id);
+                          await Swal.fire({
+                            icon: 'success',
+                            title: 'Category deleted',
+                            text: 'The category was removed.',
+                            timer: 1400,
+                            showConfirmButton: false,
+                          });
+                        } catch (err) {
+                          await Swal.fire({
+                            icon: 'error',
+                            title: 'Could not delete category',
+                            text: err instanceof Error ? err.message : 'Please try again.',
+                          });
                         }
                       }}
                       aria-label={`Delete ${category.name}`}

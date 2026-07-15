@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import Swal from 'sweetalert2';
 import type { Category, Expense } from '../types';
 import type { NewExpenseInput } from '../hooks/useExpenses';
 import { useAuth } from '../context/AuthContext';
@@ -70,13 +71,55 @@ export function DashboardTab({
     return expenses.filter((e) => e.date.startsWith(key)).reduce((sum, e) => sum + e.amount, 0);
   }, [expenses]);
 
+  const todayTotal = useMemo(() => {
+    return expenses.filter((e) => e.date === todayIso()).reduce((sum, e) => sum + e.amount, 0);
+  }, [expenses]);
+
   const firstName = profile?.displayName?.split(' ')[0] || '';
+
+  const handleDeleteExpense = async (expenseId: string) => {
+    const result = await Swal.fire({
+      title: 'Delete this expense?',
+      text: 'This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it',
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteExpense(expenseId);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Expense deleted',
+        text: 'The transaction was removed.',
+        timer: 1600,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Could not delete expense',
+        text: err instanceof Error ? err.message : 'Please try again.',
+      });
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitError(null);
     const category = categoryById.get(form.categoryId) ?? categories[0];
-    if (!form.date || !form.amount || !category) return;
+    if (!form.date || !form.amount || !category) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Missing details',
+        text: 'Please choose a date, amount, and category before saving.',
+      });
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -88,8 +131,20 @@ export function DashboardTab({
         note: form.note.trim(),
       });
       setForm((prev) => ({ ...prev, note: '', amount: '' }));
+      await Swal.fire({
+        icon: 'success',
+        title: 'Expense saved',
+        text: 'Your transaction was added successfully.',
+        timer: 1600,
+        showConfirmButton: false,
+      });
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Could not save this expense. Please try again.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Save failed',
+        text: err instanceof Error ? err.message : 'Could not save this expense. Please try again.',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -106,8 +161,16 @@ export function DashboardTab({
           <p className="hero-date">{formatHeaderDate()}</p>
         </div>
         <div className="summary-card">
-          <span className="summary-label">Total this month</span>
-          <span className="summary-amount">{formatCurrency(thisMonthTotal)}</span>
+          <div className="summary-metrics">
+            <div className="summary-metric">
+              <span className="summary-label">This month</span>
+              <span className="summary-amount">{formatCurrency(thisMonthTotal)}</span>
+            </div>
+            <div className="summary-metric">
+              <span className="summary-label">Today</span>
+              <span className="summary-amount">{formatCurrency(todayTotal)}</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -270,7 +333,7 @@ export function DashboardTab({
                             className="delete-btn"
                             onClick={(event) => {
                               event.stopPropagation();
-                              deleteExpense(expense.id);
+                              handleDeleteExpense(expense.id);
                             }}
                             aria-label={`Delete ${expense.note || expense.categoryName}`}
                           >
