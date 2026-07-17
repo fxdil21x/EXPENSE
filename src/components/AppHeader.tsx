@@ -15,9 +15,8 @@ export function AppHeader({
   pendingCount: number;
 }) {
   const { profile, signOutUser, updateProfile } = useAuth();
-  const [showInstallGuide, setShowInstallGuide] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(profile?.displayName || '');
 
@@ -60,8 +59,12 @@ export function AppHeader({
     }
   };
 
-  const handleCloseProfile = () => {
-    setShowProfileMenu(false);
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  const handleCloseMenu = () => {
+    setShowMenuDropdown(false);
     setIsEditingName(false);
     setEditedName(profile?.displayName || '');
   };
@@ -99,76 +102,53 @@ export function AppHeader({
       </nav>
 
       <div className="header-actions">
-        {deferredPrompt && (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setShowInstallGuide(!showInstallGuide)}
-            title="Install this app"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Install
-          </button>
-        )}
+        <button
+          type="button"
+          className="btn-icon"
+          onClick={handleRefresh}
+          aria-label="Refresh"
+          title="Refresh page"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="23 4 23 10 17 10" />
+            <polyline points="1 20 1 14 7 14" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36" />
+          </svg>
+        </button>
 
-        {showInstallGuide && (
-          <div className="install-guide" style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            marginTop: '8px',
-            backgroundColor: '#fff',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            padding: '16px',
-            width: '320px',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-            zIndex: 1000
-          }}>
-            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '8px' }}>Install App</h3>
-            <button
-              onClick={handleInstall}
-              style={{
-                width: '100%',
-                padding: '8px',
-                marginBottom: '8px',
-                backgroundColor: '#4f46e5',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: 500
-              }}
-            >
-              Install Now
-            </button>
-            <p style={{ fontSize: '0.75rem', color: '#666', lineHeight: 1.5, marginBottom: '8px' }}
-            >The app will be installed on your home screen for quick access.</p>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {profile?.photoURL ? (
+            <img 
+              className="user-avatar" 
+              src={profile.photoURL} 
+              alt={profile.displayName} 
+              referrerPolicy="no-referrer"
+              title={profile.displayName}
+            />
+          ) : (
+            <div className="user-avatar user-avatar-fallback" title={profile?.displayName}>
+              {profile?.displayName?.[0] ?? '?'}
+            </div>
+          )}
+        </div>
 
         <div style={{ position: 'relative' }}>
           <button
             type="button"
-            className="user-chip"
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            className="btn-icon"
+            onClick={() => setShowMenuDropdown(!showMenuDropdown)}
+            aria-label="Menu"
+            title="Options"
           >
-            {profile?.photoURL ? (
-              <img className="user-avatar" src={profile.photoURL} alt={profile.displayName} referrerPolicy="no-referrer" />
-            ) : (
-              <div className="user-avatar user-avatar-fallback">{profile?.displayName?.[0] ?? '?'}</div>
-            )}
-            <span className="user-name">{profile?.displayName}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="18" x2="20" y2="18" />
+            </svg>
           </button>
 
-          {showProfileMenu && (
-            <div className="profile-menu" style={{
+          {showMenuDropdown && (
+            <div className="header-menu-dropdown" style={{
               position: 'absolute',
               top: '100%',
               right: 0,
@@ -243,7 +223,7 @@ export function AppHeader({
                   <button
                     onClick={() => {
                       handleInstall();
-                      handleCloseProfile();
+                      handleCloseMenu();
                     }}
                     style={{
                       width: '100%',
@@ -290,7 +270,7 @@ export function AppHeader({
               <button
                 onClick={() => {
                   signOutUser();
-                  handleCloseProfile();
+                  handleCloseMenu();
                 }}
                 style={{
                   width: '100%',
@@ -309,15 +289,6 @@ export function AppHeader({
             </div>
           )}
         </div>
-
-        <button type="button" className="btn-icon" onClick={signOutUser} aria-label="Sign out" title="Sign out" style={{ display: 'none' }}>
-
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-        </button>
       </div>
     </header>
   );
